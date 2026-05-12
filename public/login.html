@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0d0d12" />
+  <title>Login — Remote Controller</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #0d0d12;
+      --surface:    #16161f;
+      --surface2:   #1e1e2b;
+      --border:     rgba(255,255,255,0.07);
+      --accent:     #7c5cfc;
+      --accent2:    #a78bfa;
+      --text:       #f0f0f8;
+      --text-muted: #7070a0;
+      --danger:     #fc5c7d;
+      --radius:     20px;
+      --radius-sm:  12px;
+      --t:          0.18s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overscroll-behavior: none;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100dvh;
+      padding: env(safe-area-inset-top,24px) 20px env(safe-area-inset-bottom,24px) 20px;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% -10%, rgba(124,92,252,0.18) 0%, transparent 60%),
+        var(--bg);
+    }
+
+    .card {
+      width: 100%;
+      max-width: 340px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 36px 28px;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.03) inset, 0 32px 64px rgba(0,0,0,0.5);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 28px;
+    }
+
+    /* Lock icon */
+    .lock-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      box-shadow: 0 0 28px rgba(124,92,252,0.4);
+    }
+
+    .title-group { text-align: center; display: flex; flex-direction: column; gap: 6px; }
+    .title-group h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+    .title-group p { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+
+    /* PIN input */
+    .pin-wrap { width: 100%; display: flex; flex-direction: column; gap: 10px; }
+
+    .pin-input {
+      width: 100%;
+      height: 60px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 6px;
+      text-align: center;
+      outline: none;
+      transition: border-color var(--t), box-shadow var(--t);
+      -webkit-user-select: text;
+      user-select: text;
+    }
+    .pin-input:focus {
+      border-color: rgba(124,92,252,0.6);
+      box-shadow: 0 0 0 3px rgba(124,92,252,0.15);
+    }
+    .pin-input.error {
+      border-color: rgba(252,92,125,0.6);
+      box-shadow: 0 0 0 3px rgba(252,92,125,0.15);
+      animation: shake 0.35s ease;
+    }
+
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20%      { transform: translateX(-8px); }
+      40%      { transform: translateX(8px); }
+      60%      { transform: translateX(-6px); }
+      80%      { transform: translateX(6px); }
+    }
+
+    .error-msg {
+      font-size: 13px;
+      color: var(--danger);
+      text-align: center;
+      min-height: 18px;
+      transition: opacity var(--t);
+    }
+    .error-msg:empty { opacity: 0; }
+
+    /* Unlock button */
+    .btn-unlock {
+      width: 100%;
+      height: 54px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity var(--t), transform var(--t);
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    .btn-unlock:hover { opacity: 0.88; }
+    .btn-unlock:active { transform: scale(0.97); }
+    .btn-unlock:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .hint {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-align: center;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="card" role="main">
+    <div class="lock-icon" aria-hidden="true">🔑</div>
+
+    <div class="title-group">
+      <h1>Enter PIN</h1>
+      <p>Check your Mac's terminal for the 6‑digit PIN printed at server startup.</p>
+    </div>
+
+    <div class="pin-wrap">
+      <input
+        class="pin-input"
+        id="pinInput"
+        type="password"
+        inputmode="numeric"
+        maxlength="20"
+        placeholder="······"
+        autocomplete="one-time-code"
+        aria-label="PIN"
+      />
+      <p class="error-msg" id="errorMsg" role="alert"></p>
+    </div>
+
+    <button class="btn-unlock" id="btnUnlock" aria-label="Unlock">Unlock →</button>
+
+    <p class="hint">Session expires after 1 hour of inactivity.<br>Restart the server to generate a new PIN.</p>
+  </div>
+
+  <script>
+    const pinInput  = document.getElementById('pinInput');
+    const btnUnlock = document.getElementById('btnUnlock');
+    const errorMsg  = document.getElementById('errorMsg');
+
+    let lockoutTimer = null; // holds the setInterval id during a lockout
+
+    function showError(msg) {
+      errorMsg.textContent = msg;
+      pinInput.classList.remove('error');
+      // Trigger reflow so the animation restarts even on repeated errors
+      void pinInput.offsetWidth;
+      pinInput.classList.add('error');
+    }
+
+    function clearError() {
+      errorMsg.textContent = '';
+      pinInput.classList.remove('error');
+    }
+
+    /** Disable the form and count down `seconds` seconds, then re-enable. */
+    function startLockoutCountdown(seconds) {
+      // Clear any previous countdown
+      if (lockoutTimer) clearInterval(lockoutTimer);
+
+      pinInput.disabled  = true;
+      btnUnlock.disabled = true;
+      pinInput.classList.add('error');
+
+      let remaining = seconds;
+
+      function tick() {
+        errorMsg.textContent = `Too many attempts — try again in ${remaining}s`;
+        if (remaining <= 0) {
+          clearInterval(lockoutTimer);
+          lockoutTimer = null;
+          pinInput.disabled  = false;
+          btnUnlock.disabled = false;
+          btnUnlock.textContent = 'Unlock →';
+          pinInput.classList.remove('error');
+          errorMsg.textContent = '';
+          pinInput.value = '';
+          pinInput.focus();
+        }
+        remaining--;
+      }
+
+      tick(); // fire immediately so there's no 1 s delay before first render
+      lockoutTimer = setInterval(tick, 1000);
+    }
+
+    async function attemptLogin() {
+      // Block if locked out
+      if (lockoutTimer) return;
+
+      const pin = pinInput.value.trim();
+      if (!pin) { showError('Please enter your PIN.'); return; }
+
+      btnUnlock.disabled = true;
+      btnUnlock.textContent = 'Checking…';
+      clearError();
+
+      try {
+        const res = await fetch('/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pin }),
+        });
+
+        if (res.ok) {
+          window.location.href = '/';
+          return; // skip finally re-enable — we're navigating away
+        }
+
+        const data = await res.json().catch(() => ({}));
+
+        if (res.status === 429) {
+          // Extract remaining seconds from the server response
+          const match = (data.error || '').match(/(\d+)s/);
+          const secs = match ? parseInt(match[1], 10) : 60;
+          startLockoutCountdown(secs);
+          return; // countdown handles re-enable; skip the finally block logic
+        }
+
+        showError(data.error || 'Incorrect PIN.');
+        pinInput.value = '';
+        pinInput.focus();
+      } catch {
+        showError('Could not reach the server.');
+      } finally {
+        // Only re-enable if we're NOT in a lockout countdown
+        if (!lockoutTimer) {
+          btnUnlock.disabled = false;
+          btnUnlock.textContent = 'Unlock →';
+        }
+      }
+    }
+
+    btnUnlock.addEventListener('click', attemptLogin);
+    pinInput.addEventListener('keydown', e => { if (e.key === 'Enter') attemptLogin(); });
+    pinInput.addEventListener('input', () => { if (!lockoutTimer) clearError(); });
+
+    // Auto-focus on load
+    pinInput.focus();
+  </script>
+</body>
+</html>

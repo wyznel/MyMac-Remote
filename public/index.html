@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0d0d12" />
+  <title>Volume Controller</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset & Tokens ────────────────────────────────────────────── */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #0d0d12;
+      --surface: #16161f;
+      --surface2: #1e1e2b;
+      --border: rgba(255, 255, 255, 0.07);
+      --accent: #7c5cfc;
+      --accent2: #a78bfa;
+      --accent-glow: rgba(124, 92, 252, 0.35);
+      --text: #f0f0f8;
+      --text-muted: #7070a0;
+      --danger: #fc5c7d;
+      --danger-glow: rgba(252, 92, 125, 0.3);
+      --success: #43e97b;
+      --radius: 20px;
+      --radius-sm: 12px;
+      --transition: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* ── Base ──────────────────────────────────────────────────────── */
+    html,
+    body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overscroll-behavior: none;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100dvh;
+      padding: env(safe-area-inset-top, 24px) 20px env(safe-area-inset-bottom, 24px) 20px;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% -10%, rgba(124, 92, 252, 0.18) 0%, transparent 60%),
+        var(--bg);
+    }
+
+    /* ── Card ──────────────────────────────────────────────────────── */
+    .card {
+      width: 100%;
+      max-width: 380px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px 28px;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.03) inset,
+        0 32px 64px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      user-select: none;
+    }
+
+    /* ── Header ────────────────────────────────────────────────────── */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header-title {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .header-title h1 {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+    }
+
+    .header-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    /* ── Status dot ────────────────────────────────────────────────── */
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      box-shadow: 0 0 0 3px rgba(112, 112, 160, 0.15);
+      transition: background var(--transition), box-shadow var(--transition);
+      flex-shrink: 0;
+    }
+
+    .status-dot.connected {
+      background: var(--success);
+      box-shadow: 0 0 0 3px rgba(67, 233, 123, 0.2);
+    }
+
+    /* ── Volume display ────────────────────────────────────────────── */
+    .volume-display {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      flex-direction: column;
+    }
+
+    .volume-number {
+      font-size: 72px;
+      font-weight: 700;
+      letter-spacing: -4px;
+      line-height: 1;
+      background: linear-gradient(135deg, #fff 30%, var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      transition: opacity var(--transition);
+    }
+
+    .volume-number.muted {
+      opacity: 0.35;
+    }
+
+    .volume-label {
+      font-size: 12px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+    }
+
+    /* ── Slider ────────────────────────────────────────────────────── */
+    .slider-wrap {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .slider-icon {
+      flex-shrink: 0;
+      opacity: 0.4;
+      display: flex;
+      align-items: center;
+    }
+
+    .slider-icon svg {
+      width: 18px;
+      height: 18px;
+      fill: var(--text);
+    }
+
+    .slider-icon.loud svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      flex: 1;
+      height: 6px;
+      border-radius: 999px;
+      outline: none;
+      cursor: pointer;
+      background: var(--surface2);
+      /* filled portion set via JS */
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      box-shadow: 0 0 0 4px rgba(124, 92, 252, 0.25), 0 4px 12px rgba(0, 0, 0, 0.4);
+      cursor: pointer;
+      transition: box-shadow var(--transition), transform var(--transition);
+    }
+
+    input[type="range"]:active::-webkit-slider-thumb {
+      box-shadow: 0 0 0 7px rgba(124, 92, 252, 0.25), 0 4px 12px rgba(0, 0, 0, 0.4);
+      transform: scale(1.08);
+    }
+
+    /* ── Buttons row ───────────────────────────────────────────────── */
+    .btn-row {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      transition:
+        background var(--transition),
+        box-shadow var(--transition),
+        transform var(--transition),
+        opacity var(--transition);
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    .btn:active {
+      transform: scale(0.95);
+    }
+
+    /* Step buttons (vol– / vol+) */
+    .btn-step {
+      flex: 1;
+      height: 56px;
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-step:hover {
+      background: #27273a;
+    }
+
+    .btn-step svg {
+      width: 20px;
+      height: 20px;
+      fill: var(--text);
+    }
+
+    /* Mute button */
+    .btn-mute {
+      flex: 1;
+      height: 56px;
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-mute:hover {
+      background: #27273a;
+    }
+
+    .btn-mute.active {
+      background: rgba(252, 92, 125, 0.15);
+      border-color: rgba(252, 92, 125, 0.4);
+      color: var(--danger);
+      box-shadow: 0 0 18px var(--danger-glow);
+    }
+
+    .btn-mute svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .btn-mute:not(.active) svg {
+      fill: var(--text);
+    }
+
+    .btn-mute.active svg {
+      fill: var(--danger);
+    }
+
+    /* ── Toast ─────────────────────────────────────────────────────── */
+    #toast {
+      position: fixed;
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 32px);
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(30, 30, 43, 0.92);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 10px 22px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.25s, transform 0.25s;
+      white-space: nowrap;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    #toast.error {
+      color: var(--danger);
+      border-color: rgba(252, 92, 125, 0.3);
+    }
+
+    /* ── Divider ───────────────────────────────────────────────────── */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      border-radius: 999px;
+    }
+
+    /* ── Refresh note ──────────────────────────────────────────────── */
+    .footer-note {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    /* ── Nav link ──────────────────────────────────────────────────── */
+    .nav-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      height: 48px;
+      border-radius: var(--radius-sm);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background var(--transition), color var(--transition);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .nav-link:hover {
+      background: #27273a;
+      color: var(--text);
+    }
+
+    /* ── Logout button ─────────────────────────────────────── */
+    .btn-logout {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 16px;
+      cursor: pointer;
+      padding: 4px 6px;
+      border-radius: 6px;
+      line-height: 1;
+      transition: color var(--transition);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn-logout:hover {
+      color: var(--danger);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="card" role="main">
+
+    <!-- Header -->
+    <div class="header">
+      <div class="header-title">
+        <h1>Volume Controller</h1>
+        <span class="header-subtitle" id="subtitle">Connecting…</span>
+      </div>
+      <div class="header-right">
+        <div class="status-dot" id="statusDot" title="Connection status"></div>
+        <button class="btn-logout" id="btnLogout" aria-label="Log out" title="Log out">Log Out</button>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Volume number display -->
+    <div class="volume-display">
+      <div class="volume-number" id="volumeNumber">—</div>
+      <div class="volume-label" id="volumeLabel">System Volume</div>
+    </div>
+
+    <!-- Slider -->
+    <div class="slider-wrap">
+      <span class="slider-icon" aria-hidden="true">
+        <!-- quiet speaker -->
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02z" />
+        </svg>
+      </span>
+      <input type="range" id="volumeSlider" min="0" max="100" step="1" value="50" aria-label="System volume" />
+      <span class="slider-icon loud" aria-hidden="true">
+        <!-- loud speaker -->
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77 0-4.28-2.99-7.86-7-8.77z" />
+        </svg>
+      </span>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Controls row -->
+    <div class="btn-row">
+      <!-- Volume Down -->
+      <button class="btn btn-step" id="btnDown" aria-label="Volume down by 5">
+        <svg viewBox="0 0 24 24">
+          <path
+            d="M19 11H7.83l4.88-4.88c.39-.39.39-1.03 0-1.42-.39-.39-1.02-.39-1.41 0l-6.59 6.59c-.39.39-.39 1.02 0 1.41l6.59 6.59c.39.39 1.02.39 1.41 0 .39-.39.39-1.02 0-1.41L7.83 13H19c.55 0 1-.45 1-1s-.45-1-1-1z" />
+        </svg>
+        Vol −5
+      </button>
+
+      <!-- Mute toggle -->
+      <button class="btn btn-mute" id="btnMute" aria-label="Toggle mute" aria-pressed="false">
+        <!-- unmuted icon (default) -->
+        <svg id="muteIconUnmuted" viewBox="0 0 24 24">
+          <path
+            d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77 0-4.28-2.99-7.86-7-8.77z" />
+        </svg>
+        <!-- muted icon -->
+        <svg id="muteIconMuted" viewBox="0 0 24 24" style="display:none">
+          <path
+            d="M16.5 12A4.5 4.5 0 0 0 14 7.97v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3 3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06A8.99 8.99 0 0 0 17.46 19l2.26 2.27L21 19.73l-9-9L4.27 3zM12 4 9.91 6.09 12 8.18V4z" />
+        </svg>
+        Mute
+      </button>
+
+      <!-- Volume Up -->
+      <button class="btn btn-step" id="btnUp" aria-label="Volume up by 5">
+        <svg viewBox="0 0 24 24">
+          <path
+            d="M5 13h11.17l-4.88 4.88c-.39.39-.39 1.03 0 1.42.39.39 1.02.39 1.41 0l6.59-6.59c.39-.39.39-1.02 0-1.41l-6.58-6.6c-.39-.39-1.02-.39-1.41 0-.39.39-.39 1.02 0 1.41L16.17 11H5c-.55 0-1 .45-1 1s.45 1 1 1z" />
+        </svg>
+        Vol +5
+      </button>
+    </div>
+
+    <p class="footer-note" id="footerNote">Loading current state…</p>
+    <a class="nav-link" href="/trackpad.html">Mouse &amp; Trackpad →</a>
+  </div>
+
+  <!-- Toast notification -->
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    // ── State ────────────────────────────────────────────────────────
+    const state = { volume: 50, muted: false, connected: false };
+
+    // ── DOM refs ─────────────────────────────────────────────────────
+    const $ = id => document.getElementById(id);
+    const volumeNumber = $('volumeNumber');
+    const volumeLabel = $('volumeLabel');
+    const volumeSlider = $('volumeSlider');
+    const btnDown = $('btnDown');
+    const btnUp = $('btnUp');
+    const btnMute = $('btnMute');
+    const muteIconUnmuted = $('muteIconUnmuted');
+    const muteIconMuted = $('muteIconMuted');
+    const statusDot = $('statusDot');
+    const subtitle = $('subtitle');
+    const footerNote = $('footerNote');
+    const toast = $('toast');
+
+    // ── Toast ────────────────────────────────────────────────────────
+    let toastTimer;
+    function showToast(msg, isError = false) {
+      clearTimeout(toastTimer);
+      toast.textContent = msg;
+      toast.classList.toggle('error', isError);
+      toast.classList.add('show');
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+    }
+
+    // ── Render UI from state ─────────────────────────────────────────
+    function render() {
+      const { volume, muted, connected } = state;
+
+      // Volume number
+      volumeNumber.textContent = volume;
+      volumeNumber.classList.toggle('muted', muted);
+
+      // Label
+      volumeLabel.textContent = muted ? '🔇  Muted' : 'System Volume';
+
+      // Slider — update fill gradient
+      const pct = volume;
+      volumeSlider.value = volume;
+      volumeSlider.style.background = `linear-gradient(to right,
+        var(--accent) 0%,
+        var(--accent2) ${pct}%,
+        var(--surface2) ${pct}%,
+        var(--surface2) 100%)`;
+
+      // Mute button
+      btnMute.classList.toggle('active', muted);
+      btnMute.setAttribute('aria-pressed', muted);
+      muteIconUnmuted.style.display = muted ? 'none' : '';
+      muteIconMuted.style.display = muted ? '' : 'none';
+
+      // Status
+      statusDot.classList.toggle('connected', connected);
+      subtitle.textContent = connected ? 'MacBook' : 'Connecting…';
+
+      // Footer
+      footerNote.textContent = connected
+        ? 'Connected · live'
+        : 'Trying to reach the server…';
+    }
+
+    // ── API helpers ────────────────────────────────────────────────────
+    async function apiFetch(path, method = 'GET', body) {
+      const opts = {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+      };
+      if (body !== undefined) opts.body = JSON.stringify(body);
+
+      const res = await fetch(path, opts);
+      if (res.status === 401) { window.location.href = '/login'; throw new Error('session'); }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    }
+
+    function applyServerState(data) {
+      state.volume = data.volume;
+      state.muted = data.muted;
+      state.connected = true;
+      render();
+    }
+
+    // ── SSE: real-time volume sync ────────────────────────────────────
+    // Replaces the old 5-second poll. The server pushes { volume, muted }
+    // within 1 s of any system volume change, including changes on the Mac.
+    let evtSource = null;
+    /** Doubles after each failure, capped at 30 s. Resets to 1 s on a successful message. */
+    let sseReconnectDelay = 1000;
+
+    function connectSSE() {
+      if (evtSource) { evtSource.close(); evtSource = null; }
+      evtSource = new EventSource('/api/events');
+
+      evtSource.onmessage = e => {
+        sseReconnectDelay = 1000; // reset backoff on any successful event
+        try { applyServerState(JSON.parse(e.data)); } catch { }
+      };
+
+      evtSource.onerror = () => {
+        state.connected = false;
+        render();
+        evtSource.close();
+        evtSource = null;
+
+        const delay = sseReconnectDelay;
+        sseReconnectDelay = Math.min(sseReconnectDelay * 2, 30_000);
+
+        // Check for session expiry first; otherwise schedule a reconnect.
+        fetch('/api/volume')
+          .then(r => {
+            if (r.status === 401) { window.location.href = '/login'; return; }
+            showToast(`Reconnecting in ${Math.round(delay / 1000)}s…`);
+            setTimeout(connectSSE, delay);
+          })
+          .catch(() => {
+            showToast(`Reconnecting in ${Math.round(delay / 1000)}s…`);
+            setTimeout(connectSSE, delay);
+          });
+      };
+    }
+
+    // ── Slider interaction ────────────────────────────────────────────
+    let sliderDebounce;
+
+    volumeSlider.addEventListener('input', () => {
+      // Immediate local feedback
+      state.volume = parseInt(volumeSlider.value, 10);
+      render();
+
+      clearTimeout(sliderDebounce);
+      sliderDebounce = setTimeout(() => {
+        apiFetch('/api/volume', 'POST', { volume: state.volume })
+          .then(applyServerState)
+          .catch(() => showToast('Could not set volume', true));
+      }, 80);
+    });
+
+    // Prevent page scroll while dragging slider on mobile
+    volumeSlider.addEventListener('touchmove', e => e.stopPropagation(), { passive: false });
+
+    // ── Haptic feedback ───────────────────────────────────────────────
+    const haptic = (ms = 8) => navigator.vibrate?.(ms);
+
+    // ── Volume step buttons ───────────────────────────────────────────
+    btnDown.addEventListener('click', async () => {
+      haptic();
+      try {
+        const data = await apiFetch('/api/volume/down', 'POST');
+        applyServerState(data);
+        showToast(`Volume ${data.volume}`);
+      } catch {
+        showToast('Error', true);
+      }
+    });
+
+    btnUp.addEventListener('click', async () => {
+      haptic();
+      try {
+        const data = await apiFetch('/api/volume/up', 'POST');
+        applyServerState(data);
+        showToast(`Volume ${data.volume}`);
+      } catch {
+        showToast('Error', true);
+      }
+    });
+
+    // ── Mute toggle ───────────────────────────────────────────────────
+    btnMute.addEventListener('click', async () => {
+      haptic(14);
+      const next = !state.muted;
+      try {
+        const data = await apiFetch('/api/mute', 'POST', { muted: next });
+        applyServerState(data);
+        showToast(data.muted ? 'Muted' : 'Unmuted');
+      } catch {
+        showToast('Error', true);
+      }
+    });
+
+    // ── Screen Wake Lock ──────────────────────────────────────────────
+    // Prevents the phone screen from dimming while the remote is open.
+    let wakeLock = null;
+    async function requestWakeLock() {
+      try {
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeLock.addEventListener('release', () => { wakeLock = null; });
+      } catch { /* not supported or permission denied — silently ignore */ }
+    }
+    // Wake lock is released when the tab is hidden; re-acquire on return.
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') requestWakeLock();
+    });
+
+    // ── Init ────────────────────────────────────────────────────────
+    render();            // render placeholder immediately
+    connectSSE();        // connect — server sends current state on open
+    requestWakeLock();   // keep screen on while the remote is active
+
+    // ── Logout ──────────────────────────────────────────────────
+    $('btnLogout').addEventListener('click', () => {
+      fetch('/auth/logout', { method: 'POST' })
+        .finally(() => { window.location.href = '/login'; });
+    });
+  </script>
+</body>
+
+</html>

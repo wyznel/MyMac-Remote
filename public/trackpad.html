@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0d0d12" />
+  <title>Trackpad Controller</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #0d0d12;
+      --surface: #16161f;
+      --surface2: #1e1e2b;
+      --border: rgba(255, 255, 255, 0.07);
+      --accent: #7c5cfc;
+      --accent2: #a78bfa;
+      --text: #f0f0f8;
+      --muted: #7070a0;
+      --danger: #fc5c7d;
+      --success: #43e97b;
+      --radius: 20px;
+      --radius-sm: 12px;
+      --t: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    html,
+    body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overscroll-behavior: none;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100dvh;
+      padding: env(safe-area-inset-top, 24px) 20px env(safe-area-inset-bottom, 24px) 20px;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% -10%, rgba(124, 92, 252, 0.18) 0%, transparent 60%),
+        var(--bg);
+    }
+
+    /* ── Card ── */
+    .card {
+      width: 100%;
+      max-width: 380px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03) inset, 0 32px 64px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      user-select: none;
+    }
+
+    /* ── Header ── */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .back-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 17px;
+      flex-shrink: 0;
+      transition: background var(--t), color var(--t);
+    }
+
+    .back-btn:hover {
+      background: #27273a;
+      color: var(--text);
+    }
+
+    .header-title {
+      flex: 1;
+    }
+
+    .header-title h1 {
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+    }
+
+    .header-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+
+    /* Header icon buttons (keyboard toggle + logout) */
+    .header-icon-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 16px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background var(--t), color var(--t), border-color var(--t);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .header-icon-btn:hover {
+      background: #27273a;
+      color: var(--text);
+    }
+
+    .header-icon-btn.active {
+      background: rgba(124, 92, 252, 0.15);
+      border-color: rgba(124, 92, 252, 0.4);
+      color: var(--accent2);
+    }
+
+    .header-icon-btn.logout:hover {
+      color: var(--danger);
+    }
+
+    /* ── Trackpad ── */
+    .trackpad-area {
+      height: 260px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      touch-action: none;
+      cursor: crosshair;
+      transition: border-color var(--t), box-shadow var(--t);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .trackpad-area.active {
+      border-color: rgba(124, 92, 252, 0.5);
+      box-shadow: 0 0 24px rgba(124, 92, 252, 0.12);
+    }
+
+    /* Drag-mode overrides the active glow with a red one */
+    .trackpad-area.dragging {
+      border-color: rgba(252, 92, 125, 0.6) !important;
+      box-shadow: 0 0 28px rgba(252, 92, 125, 0.22) !important;
+    }
+
+    .drag-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(252, 92, 125, 0.92);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 999px;
+      opacity: 0;
+      transform: scale(0.8) translateY(-4px);
+      transition: opacity 0.2s, transform 0.2s;
+      pointer-events: none;
+    }
+
+    .trackpad-area.dragging .drag-badge {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+
+    .trackpad-hint {
+      font-size: 12px;
+      color: var(--muted);
+      pointer-events: none;
+      text-align: center;
+      line-height: 1.7;
+      opacity: 0.7;
+    }
+
+    /* ── Compact button rows ── */
+    .btn-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      flex: 1;
+      height: 46px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface2);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background var(--t), transform var(--t);
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    .btn:hover {
+      background: #27273a;
+    }
+
+    .btn:active {
+      transform: scale(0.94);
+    }
+
+    .btn-icon {
+      font-size: 15px;
+      line-height: 1;
+    }
+
+    /* Scroll buttons slightly shorter */
+    .btn-scroll {
+      height: 42px;
+      font-size: 13px;
+    }
+
+    /* ── Collapsible keyboard section ── */
+    .keyboard-section {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+      transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
+    }
+
+    .keyboard-section.open {
+      max-height: 200px;
+      opacity: 1;
+    }
+
+    .type-textarea {
+      width: 100%;
+      height: 80px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 15px;
+      padding: 11px 13px;
+      resize: none;
+      outline: none;
+      transition: border-color var(--t), box-shadow var(--t);
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
+    .type-textarea::placeholder {
+      color: var(--muted);
+      opacity: 0.6;
+    }
+
+    .type-textarea:focus {
+      border-color: rgba(124, 92, 252, 0.6);
+      box-shadow: 0 0 0 3px rgba(124, 92, 252, 0.12);
+    }
+
+    .type-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-send {
+      flex: 1;
+      height: 44px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity var(--t), transform var(--t);
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    .btn-send:hover {
+      opacity: 0.88;
+    }
+
+    .btn-send:active {
+      transform: scale(0.96);
+    }
+
+    .btn-key {
+      height: 44px;
+      width: 52px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 17px;
+      cursor: pointer;
+      transition: background var(--t), color var(--t), transform var(--t);
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      flex-shrink: 0;
+    }
+
+    .btn-key:hover {
+      background: #27273a;
+      color: var(--text);
+    }
+
+    .btn-key:active {
+      transform: scale(0.95);
+    }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed;
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 28px);
+      left: 50%;
+      transform: translateX(-50%) translateY(16px);
+      background: rgba(30, 30, 43, 0.92);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 9px 20px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.22s, transform 0.22s;
+      white-space: nowrap;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    #toast.error {
+      color: var(--danger);
+      border-color: rgba(252, 92, 125, 0.3);
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="card" role="main">
+
+    <!-- Header -->
+    <div class="header">
+      <a class="back-btn" href="/" aria-label="Back to volume">←</a>
+      <div class="header-title">
+        <h1>Trackpad</h1>
+        <div class="header-sub">Drag to move · tap to click</div>
+      </div>
+      <button class="header-icon-btn" id="btnKeyboard" aria-label="Toggle keyboard" title="Type text">⌨</button>
+      <button class="header-icon-btn logout" id="btnLogout" aria-label="Log out" title="Log out">✕</button>
+    </div>
+
+    <!-- Trackpad surface -->
+    <div class="trackpad-area" id="trackpadArea" role="application" aria-label="Mouse trackpad">
+      <div class="drag-badge" aria-live="polite">Dragging</div>
+      <p class="trackpad-hint">Drag to move cursor<br><span style="font-size:11px">Tap to click &middot; double-tap
+          &amp; hold to drag &middot; two-finger drag to scroll</span></p>
+    </div>
+
+    <!-- Click buttons -->
+    <div class="btn-row">
+      <button class="btn" id="btnLeft" aria-label="Left click">
+        <span class="btn-icon">↖</span> Left
+      </button>
+      <button class="btn" id="btnDouble" aria-label="Double click">
+        <span class="btn-icon">⚡</span> Double
+      </button>
+      <button class="btn" id="btnRight" aria-label="Right click">
+        Right <span class="btn-icon">↗</span>
+      </button>
+    </div>
+
+    <!-- Scroll buttons -->
+    <div class="btn-row">
+      <button class="btn btn-scroll" id="btnScrollUp" aria-label="Scroll up">▲ Scroll Up</button>
+      <button class="btn btn-scroll" id="btnScrollDown" aria-label="Scroll down">▼ Scroll Down</button>
+    </div>
+
+    <!-- Collapsible keyboard section -->
+    <div class="keyboard-section" id="keyboardSection">
+      <textarea class="type-textarea" id="typeText" placeholder="Type here, then tap Send…" autocorrect="off"
+        autocapitalize="off" spellcheck="false"></textarea>
+      <div class="type-actions">
+        <button class="btn-send" id="btnSend" aria-label="Send text to Mac">Send ↑</button>
+        <button class="btn-key" id="btnBackspace" aria-label="Backspace" title="Backspace">⌫</button>
+        <button class="btn-key" id="btnReturn" aria-label="Return" title="Return">↩</button>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    const trackpadArea = $('trackpadArea');
+    const keyboardSection = $('keyboardSection');
+    const btnKeyboard = $('btnKeyboard');
+    const toast = $('toast');
+
+    // ── Toast ──────────────────────────────────────────────────────────
+    let toastTimer;
+    function showToast(msg, isError = false) {
+      clearTimeout(toastTimer);
+      toast.textContent = msg;
+      toast.classList.toggle('error', isError);
+      toast.classList.add('show');
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    // ── API helper ─────────────────────────────────────────────────────
+    async function apiFetch(path, method = 'GET', body) {
+      const opts = { method, headers: { 'Content-Type': 'application/json' } };
+      if (body !== undefined) opts.body = JSON.stringify(body);
+      const res = await fetch(path, opts);
+      if (res.status === 401) { window.location.href = '/login'; throw new Error('session'); }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    }
+
+    // ── Keyboard toggle ────────────────────────────────────────────────
+    let keyboardOpen = false;
+    btnKeyboard.addEventListener('click', () => {
+      keyboardOpen = !keyboardOpen;
+      keyboardSection.classList.toggle('open', keyboardOpen);
+      btnKeyboard.classList.toggle('active', keyboardOpen);
+      if (keyboardOpen) setTimeout(() => $('typeText').focus(), 310);
+    });
+    // ── Haptic feedback ───────────────────────────────────────────────
+    const haptic = (ms = 8) => navigator.vibrate?.(ms);
+
+    // ── Trackpad touch handling ────────────────────────────────────────
+    // Gesture summary:
+    //   Single tap            → left click
+    //   Single-finger drag    → move cursor
+    //   Double-tap + hold     → mousedown (drag mode); lift finger → mouseup
+    //   Two-finger drag ↕     → scroll (natural direction)
+    const SENSITIVITY = 1.8;
+    const THROTTLE_MS = 40;
+    const DOUBLE_TAP_MS = 300;  // max gap between taps to count as double-tap
+    const DRAG_HOLD_MS = 180;  // how long to hold 2nd tap before entering drag mode
+    const SCROLL_THRESHOLD = 28;   // px of two-finger travel before each scroll tick
+
+    let lastTouchX = 0, lastTouchY = 0, lastSent = 0;
+    let touchStartX = 0, touchStartY = 0, hasMoved = false;
+    let lastTapTime = 0;
+    let dragMode = false;
+    let dragHoldTimer = null;
+
+    // Two-finger scroll state
+    let twoFingerMode = false;  // true while exactly 2 fingers are down
+    let twoFingerMidY = 0;      // last recorded midpoint Y of both touches
+    let twoFingerAccum = 0;      // accumulated px travel before next scroll tick
+
+    /** Midpoint Y of the first two touches. */
+    function midY(e) {
+      return (e.touches[0].clientY + e.touches[1].clientY) / 2;
+    }
+
+    function enterDragMode() {
+      dragMode = true;
+      trackpadArea.classList.add('dragging');
+      haptic(40); // longer pulse signals drag-mode entry
+      showToast('Drag mode — move then lift to release');
+      apiFetch('/api/mouse/down', 'POST').catch(() => showToast('Drag failed — check Accessibility', true));
+    }
+
+    function exitDragMode() {
+      dragMode = false;
+      trackpadArea.classList.remove('dragging');
+      apiFetch('/api/mouse/up', 'POST').catch(() => { });
+    }
+
+    // Safety release: if page is closed mid-drag the button stays held on the Mac.
+    window.addEventListener('beforeunload', () => {
+      if (dragMode) fetch('/api/mouse/up', { method: 'POST', keepalive: true });
+    });
+
+    trackpadArea.addEventListener('touchstart', e => {
+      e.preventDefault();
+      const now = Date.now();
+
+      if (e.touches.length === 2) {
+        // ── Two-finger gesture begins ──────────────────────────────────
+        twoFingerMode = true;
+        twoFingerMidY = midY(e);
+        twoFingerAccum = 0;
+        clearTimeout(dragHoldTimer); // never enter drag mode with two fingers
+        trackpadArea.classList.add('active');
+        return;
+      }
+
+      // ── Single-finger ──────────────────────────────────────────────
+      twoFingerMode = false;
+      lastTouchX = e.touches[0].clientX;
+      lastTouchY = e.touches[0].clientY;
+      touchStartX = lastTouchX;
+      touchStartY = lastTouchY;
+      hasMoved = false;
+      trackpadArea.classList.add('active');
+
+      // Double-tap-hold detection: second tap within DOUBLE_TAP_MS
+      if (!dragMode && (now - lastTapTime) < DOUBLE_TAP_MS) {
+        dragHoldTimer = setTimeout(enterDragMode, DRAG_HOLD_MS);
+      }
+      lastTapTime = now;
+    }, { passive: false });
+
+    trackpadArea.addEventListener('touchmove', e => {
+      e.preventDefault();
+
+      if (e.touches.length === 2 && twoFingerMode) {
+        // ── Two-finger scroll ──────────────────────────────────────────
+        const currentMidY = midY(e);
+        const delta = currentMidY - twoFingerMidY;
+        twoFingerMidY = currentMidY;
+        twoFingerAccum += delta; // accumulate travel
+
+        // Fire a scroll tick each time we cross SCROLL_THRESHOLD px
+        if (Math.abs(twoFingerAccum) >= SCROLL_THRESHOLD) {
+          const direction = twoFingerAccum < 0 ? 'up' : 'down';
+          twoFingerAccum = 0;
+          haptic(6);
+          apiFetch('/api/mouse/scroll', 'POST', { direction, amount: 3 })
+            .catch(() => { });
+        }
+        return;
+      }
+
+      // ── Single-finger cursor move ──────────────────────────────────
+      if (e.touches.length !== 1) return;
+      const now = Date.now();
+      if (now - lastSent < THROTTLE_MS) return;
+      lastSent = now;
+
+      const dx = (e.touches[0].clientX - lastTouchX) * SENSITIVITY;
+      const dy = (e.touches[0].clientY - lastTouchY) * SENSITIVITY;
+      lastTouchX = e.touches[0].clientX;
+      lastTouchY = e.touches[0].clientY;
+
+      if (Math.hypot(e.touches[0].clientX - touchStartX, e.touches[0].clientY - touchStartY) > 8) hasMoved = true;
+      if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return;
+
+      apiFetch('/api/mouse/move', 'POST', { dx, dy }).catch(() => { });
+    }, { passive: false });
+
+    trackpadArea.addEventListener('touchend', e => {
+      e.preventDefault();
+      clearTimeout(dragHoldTimer);
+
+      // ── Two-finger gesture ended ───────────────────────────────────
+      if (twoFingerMode && e.touches.length < 2) {
+        twoFingerMode = false;
+        twoFingerAccum = 0;
+        trackpadArea.classList.remove('active');
+        return;
+      }
+
+      // ── Single-finger ended ────────────────────────────────────────
+      trackpadArea.classList.remove('active');
+
+      if (dragMode) {
+        exitDragMode();
+        return;
+      }
+
+      if (!hasMoved) {
+        haptic();
+        apiFetch('/api/mouse/click', 'POST', { button: 'left' })
+          .then(() => showToast('Tap click'))
+          .catch(() => showToast('Click failed — check Accessibility permission', true));
+      }
+      hasMoved = false;
+    }, { passive: false });
+
+
+    // ── Click buttons ──────────────────────────────────────────────────
+    const clickMap = { btnLeft: 'left', btnRight: 'right', btnDouble: 'double' };
+    Object.entries(clickMap).forEach(([id, button]) => {
+      $(id).addEventListener('click', () => {
+        haptic(button === 'double' ? 14 : 8);
+        apiFetch('/api/mouse/click', 'POST', { button })
+          .then(() => showToast(button === 'double' ? 'Double click' : button[0].toUpperCase() + button.slice(1) + ' click'))
+          .catch(() => showToast('Click failed — check Accessibility permission', true));
+      });
+    });
+
+    // ── Scroll buttons — hold to repeat ───────────────────────────────
+    /**
+     * Wire a button to call `action` immediately on press, then repeatedly
+     * while held. Releases cleanly on pointer-up / leave / cancel.
+     */
+    function holdToRepeat(el, action, { initialMs = 400, repeatMs = 130 } = {}) {
+      let holdTimer = null;
+      let repeatTimer = null;
+      function start(e) {
+        e.preventDefault();
+        action();
+        holdTimer = setTimeout(() => {
+          repeatTimer = setInterval(action, repeatMs);
+        }, initialMs);
+      }
+      function stop() {
+        clearTimeout(holdTimer);
+        clearInterval(repeatTimer);
+        holdTimer = repeatTimer = null;
+      }
+      el.addEventListener('pointerdown', start);
+      el.addEventListener('pointerup', stop);
+      el.addEventListener('pointerleave', stop);
+      el.addEventListener('pointercancel', stop);
+    }
+
+    holdToRepeat($('btnScrollUp'), () => {
+      haptic(6);
+      apiFetch('/api/mouse/scroll', 'POST', { direction: 'up', amount: 3 })
+        .catch(() => showToast('Scroll failed', true));
+    });
+    holdToRepeat($('btnScrollDown'), () => {
+      haptic(6);
+      apiFetch('/api/mouse/scroll', 'POST', { direction: 'down', amount: 3 })
+        .catch(() => showToast('Scroll failed', true));
+    });
+
+    // ── Logout ────────────────────────────────────────────────────────
+    $('btnLogout').addEventListener('click', () => {
+      fetch('/auth/logout', { method: 'POST' }).finally(() => { window.location.href = '/login'; });
+    });
+
+    // ── Text input ────────────────────────────────────────────────────
+    const typeText = $('typeText');
+
+    function sendText() {
+      const text = typeText.value;
+      if (!text) return;
+      apiFetch('/api/keyboard/type', 'POST', { text })
+        .then(d => {
+          showToast(`Sent ${d.length} char${d.length !== 1 ? 's' : ''}`);
+          typeText.value = '';
+        })
+        .catch(() => showToast('Type failed — check Accessibility permission', true));
+    }
+
+    $('btnSend').addEventListener('click', sendText);
+
+    $('btnBackspace').addEventListener('click', () => {
+      apiFetch('/api/keyboard/key', 'POST', { key: 'backspace' })
+        .then(() => showToast('⌫'))
+        .catch(() => showToast('Failed', true));
+    });
+
+    $('btnReturn').addEventListener('click', () => {
+      const chain = typeText.value
+        ? apiFetch('/api/keyboard/type', 'POST', { text: typeText.value }).then(() => { typeText.value = ''; })
+        : Promise.resolve();
+      chain
+        .then(() => apiFetch('/api/keyboard/key', 'POST', { key: 'return' }))
+        .then(() => showToast('Return ↩'))
+        .catch(() => showToast('Failed', true));
+    });
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "mymac-remote",
+  "version": "1.0.0",
+  "description": "Control your Macbook's Trackpad/Volume from any device on your network.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "license": "MIT"
+}
