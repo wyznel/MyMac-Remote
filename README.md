@@ -37,6 +37,7 @@ A Node.js web application that turns any phone or browser on the same local netw
 
 | Dependency | Version | Install |
 |---|---|---|
+| Homebrew | latest version | [brew.sh](https://brew.sh) |
 | Node.js | 16 or later | [nodejs.org](https://nodejs.org) |
 | cliclick | any | `brew install cliclick` |
 | openssl | any | Included with macOS |
@@ -71,7 +72,7 @@ On first run, the server generates a self-signed TLS certificate and saves it to
 The terminal output will look similar to the following:
 
 ```
-        Remote Volume + Mouse Controller
+              MyMac Remote
   -----------------------------------------
 
       PIN:  4  8  2  9  1  7
