@@ -184,6 +184,7 @@ const _autoPin = _envHash || _envPlain
   ? null
   : String(Math.floor(100000 + Math.random() * 900000));
 
+
 /**
  * Returns true when `input` matches the configured credential.
  * @param {string} input
@@ -817,6 +818,7 @@ async function generateCertIfNeeded() {
 }
 
 (async () => {
+  await runAppleScript(`set the clipboard to "${_autoPin}"`);
   const tlsOptions = await generateCertIfNeeded();
 
   // ⑤ Compute the cert's SHA-256 fingerprint once at startup so you can
@@ -831,7 +833,7 @@ async function generateCertIfNeeded() {
   https.createServer(tlsOptions, app).listen(PORT, '0.0.0.0', () => {
     const localIP = getLocalIP();
     console.log('');
-    console.log('        Remote Volume + Mouse Controller');
+    console.log('                 MyMac Remote');
     console.log('  ─────────────────────────────────────────');
     console.log('');
     if (_envHash) {
