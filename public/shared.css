@@ -1,0 +1,160 @@
+/* ═══════════════════════════════════════════════════════════════════
+   shared.css — design tokens + base styles shared by all three pages
+   (index.html, trackpad.html, login.html)
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Reset ───────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Design tokens ───────────────────────────────────────────────── */
+:root {
+  --bg:          #0d0d12;
+  --surface:     #16161f;
+  --surface2:    #1e1e2b;
+  --surface-hover: #27273a;
+  --border:      rgba(255, 255, 255, 0.07);
+  --accent:      #7c5cfc;
+  --accent2:     #a78bfa;
+  --accent-glow: rgba(124, 92, 252, 0.35);
+  --text:        #f0f0f8;
+  --text-muted:  #7070a0;
+  --danger:      #fc5c7d;
+  --danger-glow: rgba(252, 92, 125, 0.3);
+  --success:     #43e97b;
+  --radius:      20px;
+  --radius-sm:   12px;
+  --t:           0.18s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Base ────────────────────────────────────────────────────────── */
+html,
+body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: env(safe-area-inset-top, 24px) 20px env(safe-area-inset-bottom, 24px) 20px;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(124, 92, 252, 0.18) 0%, transparent 60%),
+    var(--bg);
+}
+
+/* ── Card ────────────────────────────────────────────────────────── */
+.card {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.03) inset,
+    0 32px 64px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+}
+
+/* ── Toast ───────────────────────────────────────────────────────── */
+#toast {
+  position: fixed;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 28px);
+  left: 50%;
+  transform: translateX(-50%) translateY(16px);
+  background: rgba(30, 30, 43, 0.92);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 9px 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.22s, transform 0.22s;
+  white-space: nowrap;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+#toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+#toast.error {
+  color: var(--danger);
+  border-color: rgba(252, 92, 125, 0.3);
+}
+
+/* ── Shared button base ──────────────────────────────────────────── */
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: background var(--t), transform var(--t), opacity var(--t);
+}
+
+.btn:active {
+  transform: scale(0.95);
+}
+
+/* ── Shared surface button (used for grid buttons on both pages) ── */
+.btn-surface {
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.btn-surface:hover {
+  background: var(--surface-hover);
+}
+
+/* ── Shared icon button (small square, used in both headers) ─────── */
+.icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+  transition: background var(--t), color var(--t), border-color var(--t);
+}
+
+.icon-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+/* ── Divider ─────────────────────────────────────────────────────── */
+.divider {
+  height: 1px;
+  background: var(--border);
+  border-radius: 999px;
+}

@@ -9,60 +9,18 @@
   <title>Login — Remote Controller</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/shared.css" />
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --bg:         #0d0d12;
-      --surface:    #16161f;
-      --surface2:   #1e1e2b;
-      --border:     rgba(255,255,255,0.07);
-      --accent:     #7c5cfc;
-      --accent2:    #a78bfa;
-      --text:       #f0f0f8;
-      --text-muted: #7070a0;
-      --danger:     #fc5c7d;
-      --radius:     20px;
-      --radius-sm:  12px;
-      --t:          0.18s cubic-bezier(0.4,0,0.2,1);
-    }
-
-    html, body {
-      height: 100%;
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Inter', system-ui, sans-serif;
-      -webkit-font-smoothing: antialiased;
-      overscroll-behavior: none;
-    }
-
-    body {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100dvh;
-      padding: env(safe-area-inset-top,24px) 20px env(safe-area-inset-bottom,24px) 20px;
-      background:
-        radial-gradient(ellipse 80% 60% at 50% -10%, rgba(124,92,252,0.18) 0%, transparent 60%),
-        var(--bg);
-    }
+    /* ── login.html — page-specific styles ──────────────────────────── */
 
     .card {
-      width: 100%;
       max-width: 340px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
       padding: 36px 28px;
-      box-shadow: 0 0 0 1px rgba(255,255,255,0.03) inset, 0 32px 64px rgba(0,0,0,0.5);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
       gap: 28px;
+      align-items: center;
     }
 
-    /* Lock icon */
+    /* ── Lock icon ───────────────────────────────────────────────────── */
     .lock-icon {
       width: 56px;
       height: 56px;
@@ -72,15 +30,35 @@
       align-items: center;
       justify-content: center;
       font-size: 26px;
-      box-shadow: 0 0 28px rgba(124,92,252,0.4);
+      box-shadow: 0 0 28px rgba(124, 92, 252, 0.4);
     }
 
-    .title-group { text-align: center; display: flex; flex-direction: column; gap: 6px; }
-    .title-group h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
-    .title-group p { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+    .title-group {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
 
-    /* PIN input */
-    .pin-wrap { width: 100%; display: flex; flex-direction: column; gap: 10px; }
+    .title-group h1 {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    .title-group p {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* ── PIN input ───────────────────────────────────────────────────── */
+    .pin-wrap {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
 
     .pin-input {
       width: 100%;
@@ -99,22 +77,24 @@
       -webkit-user-select: text;
       user-select: text;
     }
+
     .pin-input:focus {
-      border-color: rgba(124,92,252,0.6);
-      box-shadow: 0 0 0 3px rgba(124,92,252,0.15);
+      border-color: rgba(124, 92, 252, 0.6);
+      box-shadow: 0 0 0 3px rgba(124, 92, 252, 0.15);
     }
+
     .pin-input.error {
-      border-color: rgba(252,92,125,0.6);
-      box-shadow: 0 0 0 3px rgba(252,92,125,0.15);
+      border-color: rgba(252, 92, 125, 0.6);
+      box-shadow: 0 0 0 3px rgba(252, 92, 125, 0.15);
       animation: shake 0.35s ease;
     }
 
     @keyframes shake {
-      0%,100% { transform: translateX(0); }
-      20%      { transform: translateX(-8px); }
-      40%      { transform: translateX(8px); }
-      60%      { transform: translateX(-6px); }
-      80%      { transform: translateX(6px); }
+      0%, 100% { transform: translateX(0); }
+      20%       { transform: translateX(-8px); }
+      40%       { transform: translateX(8px); }
+      60%       { transform: translateX(-6px); }
+      80%       { transform: translateX(6px); }
     }
 
     .error-msg {
@@ -124,9 +104,10 @@
       min-height: 18px;
       transition: opacity var(--t);
     }
+
     .error-msg:empty { opacity: 0; }
 
-    /* Unlock button */
+    /* ── Unlock button ───────────────────────────────────────────────── */
     .btn-unlock {
       width: 100%;
       height: 54px;
@@ -142,8 +123,9 @@
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
     }
-    .btn-unlock:hover { opacity: 0.88; }
-    .btn-unlock:active { transform: scale(0.97); }
+
+    .btn-unlock:hover   { opacity: 0.88; }
+    .btn-unlock:active  { transform: scale(0.97); }
     .btn-unlock:disabled { opacity: 0.5; cursor: not-allowed; }
 
     .hint {
@@ -154,6 +136,7 @@
     }
   </style>
 </head>
+
 <body>
   <div class="card" role="main">
     <div class="lock-icon" aria-hidden="true">🔑</div>

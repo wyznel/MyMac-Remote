@@ -10,69 +10,17 @@
   <title>Trackpad Controller</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/shared.css" />
   <style>
-    *,
-    *::before,
-    *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    /* ── trackpad.html — page-specific styles ───────────────────────── */
 
-    :root {
-      --bg: #0d0d12;
-      --surface: #16161f;
-      --surface2: #1e1e2b;
-      --border: rgba(255, 255, 255, 0.07);
-      --accent: #7c5cfc;
-      --accent2: #a78bfa;
-      --text: #f0f0f8;
-      --muted: #7070a0;
-      --danger: #fc5c7d;
-      --success: #43e97b;
-      --radius: 20px;
-      --radius-sm: 12px;
-      --t: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    html,
-    body {
-      height: 100%;
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Inter', system-ui, sans-serif;
-      -webkit-font-smoothing: antialiased;
-      overscroll-behavior: none;
-    }
-
-    body {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100dvh;
-      padding: env(safe-area-inset-top, 24px) 20px env(safe-area-inset-bottom, 24px) 20px;
-      background:
-        radial-gradient(ellipse 80% 60% at 50% -10%, rgba(124, 92, 252, 0.18) 0%, transparent 60%),
-        var(--bg);
-    }
-
-    /* ── Card ── */
     .card {
-      width: 100%;
       max-width: 380px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
       padding: 20px;
-      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03) inset, 0 32px 64px rgba(0, 0, 0, 0.5);
-      display: flex;
-      flex-direction: column;
       gap: 16px;
-      user-select: none;
     }
 
-    /* ── Header ── */
+    /* ── Header ─────────────────────────────────────────────────────── */
     .header {
       display: flex;
       align-items: center;
@@ -88,7 +36,7 @@
       border-radius: 10px;
       background: var(--surface2);
       border: 1px solid var(--border);
-      color: var(--muted);
+      color: var(--text-muted);
       text-decoration: none;
       font-size: 17px;
       flex-shrink: 0;
@@ -96,7 +44,7 @@
     }
 
     .back-btn:hover {
-      background: #27273a;
+      background: var(--surface-hover);
       color: var(--text);
     }
 
@@ -112,12 +60,13 @@
 
     .header-sub {
       font-size: 11px;
-      color: var(--muted);
+      color: var(--text-muted);
       margin-top: 1px;
     }
 
     /* Header icon buttons (keyboard toggle + logout) */
     .header-icon-btn {
+      /* extends .icon-btn from shared.css */
       display: flex;
       align-items: center;
       justify-content: center;
@@ -126,7 +75,7 @@
       border-radius: 10px;
       background: var(--surface2);
       border: 1px solid var(--border);
-      color: var(--muted);
+      color: var(--text-muted);
       font-size: 16px;
       cursor: pointer;
       flex-shrink: 0;
@@ -135,7 +84,7 @@
     }
 
     .header-icon-btn:hover {
-      background: #27273a;
+      background: var(--surface-hover);
       color: var(--text);
     }
 
@@ -149,7 +98,7 @@
       color: var(--danger);
     }
 
-    /* ── Trackpad ── */
+    /* ── Trackpad surface ────────────────────────────────────────────── */
     .trackpad-area {
       height: 260px;
       background: var(--surface2);
@@ -170,7 +119,6 @@
       box-shadow: 0 0 24px rgba(124, 92, 252, 0.12);
     }
 
-    /* Drag-mode overrides the active glow with a red one */
     .trackpad-area.dragging {
       border-color: rgba(252, 92, 125, 0.6) !important;
       box-shadow: 0 0 28px rgba(252, 92, 125, 0.22) !important;
@@ -201,14 +149,14 @@
 
     .trackpad-hint {
       font-size: 12px;
-      color: var(--muted);
+      color: var(--text-muted);
       pointer-events: none;
       text-align: center;
       line-height: 1.7;
       opacity: 0.7;
     }
 
-    /* ── Compact button rows ── */
+    /* ── Button rows ─────────────────────────────────────────────────── */
     .btn-row {
       display: flex;
       gap: 8px;
@@ -217,25 +165,15 @@
     .btn {
       flex: 1;
       height: 46px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       gap: 5px;
       border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
       background: var(--surface2);
       color: var(--text);
-      font-family: inherit;
       font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background var(--t), transform var(--t);
-      -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
     }
 
     .btn:hover {
-      background: #27273a;
+      background: var(--surface-hover);
     }
 
     .btn:active {
@@ -247,13 +185,11 @@
       line-height: 1;
     }
 
-    /* Scroll buttons slightly shorter */
     .btn-scroll {
       height: 42px;
-      font-size: 13px;
     }
 
-    /* ── Collapsible keyboard section ── */
+    /* ── Collapsible keyboard section ────────────────────────────────── */
     .keyboard-section {
       display: flex;
       flex-direction: column;
@@ -287,7 +223,7 @@
     }
 
     .type-textarea::placeholder {
-      color: var(--muted);
+      color: var(--text-muted);
       opacity: 0.6;
     }
 
@@ -317,13 +253,8 @@
       touch-action: manipulation;
     }
 
-    .btn-send:hover {
-      opacity: 0.88;
-    }
-
-    .btn-send:active {
-      transform: scale(0.96);
-    }
+    .btn-send:hover  { opacity: 0.88; }
+    .btn-send:active { transform: scale(0.96); }
 
     .btn-key {
       height: 44px;
@@ -331,7 +262,7 @@
       background: var(--surface2);
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
-      color: var(--muted);
+      color: var(--text-muted);
       font-family: inherit;
       font-size: 17px;
       cursor: pointer;
@@ -341,45 +272,8 @@
       flex-shrink: 0;
     }
 
-    .btn-key:hover {
-      background: #27273a;
-      color: var(--text);
-    }
-
-    .btn-key:active {
-      transform: scale(0.95);
-    }
-
-    /* ── Toast ── */
-    #toast {
-      position: fixed;
-      bottom: calc(env(safe-area-inset-bottom, 0px) + 28px);
-      left: 50%;
-      transform: translateX(-50%) translateY(16px);
-      background: rgba(30, 30, 43, 0.92);
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      padding: 9px 20px;
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--muted);
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.22s, transform 0.22s;
-      white-space: nowrap;
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-    }
-
-    #toast.show {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0);
-    }
-
-    #toast.error {
-      color: var(--danger);
-      border-color: rgba(252, 92, 125, 0.3);
-    }
+    .btn-key:hover  { background: var(--surface-hover); color: var(--text); }
+    .btn-key:active { transform: scale(0.95); }
   </style>
 </head>
 
