@@ -398,7 +398,7 @@ app.post('/auth/logout', (req, res) => {
 // Serve shared static assets that must be reachable BEFORE authentication
 // (e.g. shared.css is referenced by login.html which has no session cookie).
 // Only explicitly whitelisted filenames are exposed here.
-const PUBLIC_ASSETS = new Set(['shared.css']);
+const PUBLIC_ASSETS = new Set(['shared.css', 'manifest.json', 'icon-192.png', 'icon-512.png', 'sw.js', 'offline.html']);
 app.get('/:asset', (req, res, next) => {
   if (!PUBLIC_ASSETS.has(req.params.asset)) return next();
   res.sendFile(path.join(__dirname, 'public', req.params.asset));
