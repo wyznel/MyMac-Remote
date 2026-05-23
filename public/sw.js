@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mymac-offline-v1';
+const CACHE_NAME = 'mymac-offline-v2';
 const ASSETS = [
   '/offline.html',
   '/shared.css',

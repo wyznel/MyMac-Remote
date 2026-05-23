@@ -158,3 +158,27 @@ body {
   background: var(--border);
   border-radius: 999px;
 }
+
+/* ── Shared Navigation Link ──────────────────────────────────────── */
+.nav-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 48px;
+  border-radius: var(--radius-sm);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background var(--t), color var(--t);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.nav-link:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}

@@ -100,10 +100,65 @@ async function getVolumeState() {
   const raw = await runAppleScript('get volume settings');
   const volMatch = raw.match(/output volume:(\d+)/);
   const mutedMatch = raw.match(/output muted:(true|false)/);
+  if (!volMatch || !mutedMatch) {
+    throw new Error('Failed to parse volume settings');
+  }
   return {
-    volume: volMatch ? parseInt(volMatch[1], 10) : 0,
-    muted: mutedMatch ? mutedMatch[1] === 'true' : false,
+    volume: parseInt(volMatch[1], 10),
+    muted: mutedMatch[1] === 'true',
   };
+}
+
+/**
+ * Run the native brightness CLI binary.
+ * @param {string[]} args - Arguments to pass.
+ * @returns {Promise<number>} - Brightness percentage (0-100).
+ */
+function runBrightnessCLI(args = []) {
+  return new Promise((resolve, reject) => {
+    const binPath = path.join(__dirname, 'bin', 'brightness');
+    const proc = spawn(binPath, args);
+    let stdout = '';
+    let stderr = '';
+    proc.stdout.on('data', d => { stdout += d; });
+    proc.stderr.on('data', d => { stderr += d; });
+    proc.on('close', code => {
+      if (code === 0) {
+        const floatVal = parseFloat(stdout.trim());
+        const pct = Math.min(100, Math.max(0, Math.round(floatVal * 100)));
+        resolve(Number.isNaN(pct) ? 50 : pct);
+      } else {
+        reject(new Error(stderr.trim() || `brightness exited with code ${code}`));
+      }
+    });
+    proc.on('error', reject);
+  });
+}
+
+/**
+ * Get display brightness (0–100).
+ */
+async function getBrightnessState() {
+  try {
+    return await runBrightnessCLI([]);
+  } catch (err) {
+    console.error('[getBrightnessState] Error:', err.message);
+    throw err;
+  }
+}
+
+/**
+ * Set display brightness (0–100).
+ */
+async function setBrightnessState(pct) {
+  const clamped = Math.min(100, Math.max(0, Math.round(pct)));
+  const floatVal = (clamped / 100).toFixed(2);
+  try {
+    return await runBrightnessCLI([floatVal]);
+  } catch (err) {
+    console.error('[setBrightnessState] Error:', err.message);
+    return clamped;
+  }
 }
 
 // ─── Mouse helpers ───────────────────────────────────────────────────────────
@@ -428,13 +483,19 @@ const sseClients = new Set();
 let lastBroadcastState = null;
 
 /**
- * Poll the Mac's volume once and broadcast to all SSE clients if state changed.
+ * Poll the Mac's volume and brightness once and broadcast to all SSE clients if state changed.
  * Runs on a shared 1-second interval so every client benefits from a single
- * osascript call regardless of how many devices are connected.
+ * call regardless of how many devices are connected.
  */
 async function pollAndBroadcast() {
   try {
-    const state = await getVolumeState();
+    const volState = await getVolumeState();
+    const brightnessVal = await getBrightnessState();
+    const state = {
+      volume: volState.volume,
+      muted: volState.muted,
+      brightness: brightnessVal,
+    };
     const json = JSON.stringify(state);
     if (json !== lastBroadcastState) {
       lastBroadcastState = json;
@@ -442,7 +503,7 @@ async function pollAndBroadcast() {
         client.write(`data: ${json}\n\n`);
       }
     }
-  } catch { /* ignore transient osascript errors */ }
+  } catch { /* ignore transient errors */ }
 }
 
 /**
@@ -559,6 +620,77 @@ app.post('/api/volume/down', async (req, res) => {
     res.json(state);
   } catch (err) {
     console.error('[POST /api/volume/down]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * GET /api/brightness
+ * Returns current brightness state.
+ */
+app.get('/api/brightness', async (req, res) => {
+  try {
+    const val = await getBrightnessState();
+    res.json({ brightness: val });
+  } catch (err) {
+    console.error('[GET /api/brightness]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /api/brightness
+ * Body: { brightness: number }  (0–100)
+ * Sets the display brightness to the given level.
+ */
+app.post('/api/brightness', async (req, res) => {
+  const { brightness } = req.body;
+
+  if (brightness === undefined || typeof brightness !== 'number') {
+    return res.status(400).json({ error: '`brightness` must be a number (0–100).' });
+  }
+
+  try {
+    const val = await setBrightnessState(brightness);
+    res.json({ brightness: val });
+  } catch (err) {
+    console.error('[POST /api/brightness]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /api/brightness/up
+ * Increase brightness by a fixed step (default 5).
+ */
+app.post('/api/brightness/up', async (req, res) => {
+  const rawStep = Number(req.body?.step);
+  const step = Number.isFinite(rawStep) ? Math.min(20, Math.max(1, Math.round(rawStep))) : 5;
+  try {
+    const current = await getBrightnessState();
+    const next = Math.min(100, current + step);
+    const val = await setBrightnessState(next);
+    res.json({ brightness: val });
+  } catch (err) {
+    console.error('[POST /api/brightness/up]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /api/brightness/down
+ * Decrease brightness by a fixed step (default 5).
+ */
+app.post('/api/brightness/down', async (req, res) => {
+  const rawStep = Number(req.body?.step);
+  const step = Number.isFinite(rawStep) ? Math.min(20, Math.max(1, Math.round(rawStep))) : 5;
+  try {
+    const current = await getBrightnessState();
+    const next = Math.max(0, current - step);
+    const val = await setBrightnessState(next);
+    res.json({ brightness: val });
+  } catch (err) {
+    console.error('[POST /api/brightness/down]', err.message);
     res.status(500).json({ error: err.message });
   }
 });
@@ -747,6 +879,61 @@ app.post('/api/mouse/scroll', async (req, res) => {
     console.error('[POST /api/mouse/scroll]', err.message);
     res.status(500).json({ error: err.message });
   }
+});
+
+/**
+ * POST /api/launcher/launch
+ * Body: { app: string }
+ * Launches a given macOS application securely using osascript.
+ */
+app.post('/api/launcher/launch', async (req, res) => {
+  const { app: appName } = req.body;
+  if (typeof appName !== 'string' || appName.trim().length === 0) {
+    return res.status(400).json({ error: '`app` must be a non-empty string.' });
+  }
+
+  const trimmed = appName.trim();
+  // Safe application name check: only alphanumeric, spaces, hyphens, periods, apostrophes
+  if (!/^[a-zA-Z0-9\s\-\.\'\’]+$/.test(trimmed)) {
+    return res.status(400).json({ error: 'Invalid application name format.' });
+  }
+
+  const escapedApp = trimmed.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  try {
+    await runAppleScript(`tell application "${escapedApp}" to activate`);
+    res.json({ ok: true, app: trimmed });
+  } catch (err) {
+    console.error('[POST /api/launcher/launch]', err.message);
+    res.status(500).json({ error: `Could not launch "${trimmed}". Verify the application is installed.` });
+  }
+});
+
+/**
+ * GET /api/launcher/apps
+ * Returns a sorted, deduplicated list of all installed applications inside /Applications and /System/Applications.
+ */
+app.get('/api/launcher/apps', async (req, res) => {
+  const dirs = ['/Applications', '/System/Applications'];
+  const appSet = new Set();
+
+  for (const dir of dirs) {
+    try {
+      if (fs.existsSync(dir)) {
+        const files = await fs.promises.readdir(dir);
+        files.forEach(file => {
+          if (file.endsWith('.app') && !file.startsWith('.')) {
+            const cleanName = file.slice(0, -4);
+            appSet.add(cleanName);
+          }
+        });
+      }
+    } catch (err) {
+      console.warn(`[GET /api/launcher/apps] Warning reading directory "${dir}":`, err.message);
+    }
+  }
+
+  const sortedApps = Array.from(appSet).sort((a, b) => a.localeCompare(b));
+  res.json({ apps: sortedApps });
 });
 
 // ─── Start server ─────────────────────────────────────────────────────────────

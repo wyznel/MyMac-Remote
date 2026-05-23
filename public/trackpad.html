@@ -276,6 +276,30 @@
 
     .btn-key:hover  { background: var(--surface-hover); color: var(--text); }
     .btn-key:active { transform: scale(0.95); }
+
+    /* ── Nav link ────────────────────────────────────────────────────── */
+    .nav-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      height: 48px;
+      border-radius: var(--radius-sm);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background var(--t), color var(--t);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .nav-link:hover {
+      background: var(--surface-hover);
+      color: var(--text);
+    }
   </style>
 </head>
 
@@ -290,7 +314,26 @@
         <h1>Trackpad</h1>
         <div class="header-sub">Drag to move · tap to click</div>
       </div>
-      <button class="header-icon-btn" id="btnKeyboard" aria-label="Toggle keyboard" title="Type text">⌨</button>
+      <a class="header-icon-btn" href="/launcher.html" aria-label="Open App Launcher" title="App Launcher" style="text-decoration: none;">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-muted);">
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
+        </svg>
+      </a>
+      <button class="header-icon-btn" id="btnKeyboard" aria-label="Toggle keyboard" title="Type text">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-muted);">
+          <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
+          <line x1="6" y1="8" x2="6.01" y2="8"></line>
+          <line x1="10" y1="8" x2="10.01" y2="8"></line>
+          <line x1="14" y1="8" x2="14.01" y2="8"></line>
+          <line x1="18" y1="8" x2="18.01" y2="8"></line>
+          <line x1="6" y1="12" x2="6.01" y2="12"></line>
+          <line x1="18" y1="12" x2="18.01" y2="12"></line>
+          <line x1="7" y1="16" x2="17" y2="16"></line>
+        </svg>
+      </button>
       <button class="header-icon-btn logout" id="btnLogout" aria-label="Log out" title="Log out">✕</button>
     </div>
 

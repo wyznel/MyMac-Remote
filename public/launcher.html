@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0d0d12" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
+  <title>App Launcher</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/shared.css" />
+  <style>
+    /* ── launcher.html — page-specific styles ───────────────────────── */
+
+    .card {
+      max-width: 380px;
+      padding: 24px 20px;
+      gap: 20px;
+    }
+
+    /* ── Header ─────────────────────────────────────────────────────── */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .back-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 17px;
+      flex-shrink: 0;
+      transition: background var(--t), color var(--t);
+    }
+
+    .back-btn:hover {
+      background: var(--surface-hover);
+      color: var(--text);
+    }
+
+    .header-title {
+      flex: 1;
+    }
+
+    .header-title h1 {
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+    }
+
+    .header-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+
+    /* Header toggle buttons */
+    .header-icon-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 34px;
+      padding: 0 12px;
+      border-radius: 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background var(--t), color var(--t), border-color var(--t);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .header-icon-btn:hover {
+      background: var(--surface-hover);
+      color: var(--text);
+    }
+
+    .header-icon-btn.active {
+      background: rgba(124, 92, 252, 0.15);
+      border-color: rgba(124, 92, 252, 0.4);
+      color: var(--accent2);
+    }
+
+    /* ── App Launcher Grid ───────────────────────────────────────────── */
+    .launcher-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      grid-template-rows: repeat(4, 1fr);
+      gap: 12px;
+      width: 100%;
+    }
+
+    .launcher-tile {
+      aspect-ratio: 1.15;
+      border-radius: var(--radius-sm);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      cursor: pointer;
+      overflow: hidden;
+      transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Blank Slot Styling */
+    .launcher-tile.blank {
+      background: rgba(255, 255, 255, 0.02);
+      border: 2px dashed rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+    }
+
+    .launcher-tile.blank:hover {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: var(--accent);
+      color: var(--text);
+      box-shadow: 0 0 12px rgba(124, 92, 252, 0.1);
+    }
+
+    .tile-plus {
+      font-size: 22px;
+      font-weight: 300;
+      line-height: 1;
+      margin-bottom: 4px;
+      transition: transform var(--t);
+    }
+
+    .launcher-tile.blank:hover .tile-plus {
+      transform: scale(1.15);
+    }
+
+    .tile-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.2px;
+    }
+
+    /* Active Configured Slot Styling */
+    .launcher-tile.configured {
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .launcher-tile.configured:active {
+      transform: scale(0.96);
+    }
+
+    /* Beautiful animated linear gradients as fallback or customized backgrounds */
+    .launcher-tile.app-generic {
+      background: linear-gradient(135deg, #2e1f4d 0%, #17112a 100%);
+    }
+
+    .launcher-tile.app-spotify {
+      background: linear-gradient(135deg, #1db954 0%, #0c3e1b 100%);
+    }
+
+    .launcher-tile.app-music {
+      background: linear-gradient(135deg, #fc3c44 0%, #610d11 100%);
+    }
+
+    .launcher-tile.app-safari {
+      background: linear-gradient(135deg, #007aff 0%, #002f6c 100%);
+    }
+
+    .launcher-tile.app-chrome {
+      background: linear-gradient(135deg, #ea4335 0%, #34a853 100%);
+    }
+
+    .launcher-tile.app-terminal {
+      background: linear-gradient(135deg, #1c1c24 0%, #020202 100%);
+    }
+
+    .launcher-tile.app-settings {
+      background: linear-gradient(135deg, #8e8e93 0%, #3a3a3c 100%);
+    }
+
+    .launcher-tile.app-finder {
+      background: linear-gradient(135deg, #5ac8fa 0%, #005a9c 100%);
+    }
+
+    .launcher-tile.app-vscode {
+      background: linear-gradient(135deg, #007acc 0%, #003666 100%);
+    }
+
+    .launcher-tile.app-slack {
+      background: linear-gradient(135deg, #4a154b 0%, #210422 100%);
+    }
+
+    .launcher-tile.app-discord {
+      background: linear-gradient(135deg, #5865f2 0%, #20246b 100%);
+    }
+
+    /* Custom overlay shine effect for configured tiles */
+    .launcher-tile.configured::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(to bottom, rgba(255, 255, 255, 0.06) 0%, transparent 100%);
+      pointer-events: none;
+    }
+
+    .tile-icon {
+      font-size: 28px;
+      margin-bottom: 6px;
+      filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
+      transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .launcher-tile.configured:hover .tile-icon {
+      transform: scale(1.16) translateY(-2px);
+    }
+
+    .tile-app-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+      max-width: 90%;
+      text-align: center;
+      white-space: normal;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+      line-height: 1.3;
+    }
+
+    /* Delete Button Badge in Edit Mode */
+    .tile-delete-badge {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: rgba(252, 92, 125, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transform: scale(0.6);
+      transition: opacity 0.22s, transform 0.22s;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .editing .launcher-tile.configured .tile-delete-badge {
+      opacity: 1;
+      transform: scale(1);
+      pointer-events: auto;
+    }
+
+    /* Pulse animation in edit mode to signal shake/config mode */
+    @keyframes subtleShake {
+      0% {
+        transform: rotate(0.5deg);
+      }
+
+      50% {
+        transform: rotate(-0.5deg);
+      }
+
+      100% {
+        transform: rotate(0.5deg);
+      }
+    }
+
+    .editing .launcher-tile.configured {
+      animation: subtleShake 0.25s ease-in-out infinite;
+    }
+
+    /* ── Modal overlay ───────────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(9, 9, 14, 0.75);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.24s ease;
+      padding: 20px;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      width: 100%;
+      max-width: 340px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.6);
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transform: scale(0.92);
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .modal-overlay.open .modal-card {
+      transform: scale(1);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header h2 {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    .preset-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .preset-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 220px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    /* Scrollbar styling for preset grid */
+    .preset-grid::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .preset-grid::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 99px;
+    }
+
+    .btn-preset {
+      height: 38px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 0 12px;
+      gap: 10px;
+      cursor: pointer;
+      transition: background var(--t), border-color var(--t);
+      width: 100%;
+      flex-shrink: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn-preset:hover {
+      background: var(--surface-hover);
+      border-color: var(--accent);
+    }
+
+    .preset-icon {
+      font-size: 16px;
+    }
+
+    .custom-input {
+      height: 42px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 14px;
+      padding: 0 12px;
+      outline: none;
+      transition: border-color var(--t), box-shadow var(--t);
+    }
+
+    .custom-input:focus {
+      border-color: rgba(124, 92, 252, 0.6);
+      box-shadow: 0 0 0 3px rgba(124, 92, 252, 0.12);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .btn-modal {
+      flex: 1;
+      height: 42px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity var(--t), transform var(--t);
+    }
+
+    .btn-modal-cancel {
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+    }
+
+    .btn-modal-cancel:hover {
+      background: var(--surface-hover);
+    }
+
+    /* ── Nav link ────────────────────────────────────────────────────── */
+    .nav-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      height: 48px;
+      border-radius: var(--radius-sm);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background var(--t), color var(--t);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .nav-link:hover {
+      background: var(--surface-hover);
+      color: var(--text);
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="card" role="main">
+
+    <!-- Header -->
+    <div class="header">
+      <a class="back-btn" href="/" aria-label="Back to volume">←</a>
+      <div class="header-title">
+        <h1>App Launcher</h1>
+        <div class="header-sub" id="launcherSub">Tap to launch application</div>
+      </div>
+      <button class="header-icon-btn" id="btnEditMode" aria-label="Toggle edit mode">Edit</button>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 2x4 App Grid -->
+    <div class="launcher-grid" id="launcherGrid">
+      <!-- 8 Tiles injected dynamically by Javascript -->
+    </div>
+
+    <div class="divider"></div>
+    <a class="nav-link" style="justify-content: center; gap: 8px;" href="/trackpad.html">Trackpad Controller</a>
+
+  </div>
+
+  <!-- Selection Modal Overlay -->
+  <div class="modal-overlay" id="selectionModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="modalTitle">Configure Slot</h2>
+        <button class="modal-close" id="btnModalClose" aria-label="Close dialog">✕</button>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Search Box -->
+      <div style="display: flex; flex-direction: column; gap: 6px; width: 100%;">
+        <span class="preset-title">Search Installed Apps</span>
+        <input type="text" class="custom-input" id="appSearchInput" placeholder="Type to filter apps..."
+          autocomplete="off" />
+      </div>
+
+      <!-- Apps Scrollable List -->
+      <span class="preset-title" id="listTitle">Applications</span>
+      <div class="preset-grid" id="appsGrid">
+        <!-- Injected list of all installed apps dynamically -->
+        <span style="font-size: 12px; color: var(--text-muted); text-align: center; padding: 12px 0;">Loading
+          applications...</span>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Action Buttons -->
+      <div class="modal-actions">
+        <button class="btn-modal btn-modal-cancel" id="btnModalCancel">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+
+    // ── Pre-configured Metadata Mappings for dynamic styling ──────────
+    const PRESETS = [
+      { name: 'Finder', bgClass: 'app-finder' },
+      { name: 'Safari', bgClass: 'app-safari' },
+      { name: 'Google Chrome', bgClass: 'app-chrome' },
+      { name: 'Spotify', bgClass: 'app-spotify' },
+      { name: 'Music', bgClass: 'app-music' },
+      { name: 'Terminal', bgClass: 'app-terminal' },
+      { name: 'System Settings', bgClass: 'app-settings' },
+      { name: 'Visual Studio Code', bgClass: 'app-vscode' },
+      { name: 'Slack', bgClass: 'app-slack' },
+      { name: 'Discord', bgClass: 'app-discord' }
+    ];
+
+    // Helper: Mappings for icon and bg when user types custom app name
+    function resolveCustomMetadata(appName) {
+      const lower = appName.toLowerCase();
+
+      // Match popular presets
+      const found = PRESETS.find(p => p.name.toLowerCase() === lower);
+      if (found) return found;
+
+      // Dynamic custom heuristics
+      let bgClass = 'app-generic';
+      if (lower.includes('music') || lower.includes('player') || lower.includes('podcasts') || lower.includes('spotify') || lower.includes('tv')) bgClass = 'app-music';
+      else if (lower.includes('terminal') || lower.includes('iterm') || lower.includes('shell') || lower.includes('console')) bgClass = 'app-terminal';
+      else if (lower.includes('chrome') || lower.includes('safari') || lower.includes('firefox') || lower.includes('browser') || lower.includes('opera') || lower.includes('edge')) bgClass = 'app-safari';
+      else if (lower.includes('finder') || lower.includes('files') || lower.includes('archive') || lower.includes('disk')) bgClass = 'app-finder';
+      else if (lower.includes('settings') || lower.includes('preferences') || lower.includes('control') || lower.includes('setup') || lower.includes('keys')) bgClass = 'app-settings';
+      else if (lower.includes('code') || lower.includes('editor') || lower.includes('notes') || lower.includes('sublime') || lower.includes('xcode') || lower.includes('text') || lower.includes('pages')) bgClass = 'app-vscode';
+      else if (lower.includes('chat') || lower.includes('slack') || lower.includes('discord') || lower.includes('messages') || lower.includes('whatsapp') || lower.includes('telegram') || lower.includes('facetime') || lower.includes('zoom')) bgClass = 'app-slack';
+
+      return { name: appName, bgClass };
+    }
+
+    // ── Local Storage State ───────────────────────────────────────────
+    const STORAGE_KEY = 'rvc_launcher_slots';
+
+    // Array of 8 application slot configurations (null means empty)
+    let slots = Array(8).fill(null);
+
+    function loadState() {
+      try {
+        const data = localStorage.getItem(STORAGE_KEY);
+        if (data) {
+          const parsed = JSON.parse(data);
+          if (Array.isArray(parsed) && parsed.length === 8) {
+            slots = parsed;
+          }
+        }
+      } catch (err) {
+        console.error('Error loading launcher state:', err);
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(slots));
+      } catch (err) {
+        console.error('Error saving launcher state:', err);
+      }
+    }
+
+    // ── UI & App States ───────────────────────────────────────────────
+    let isEditing = false;
+    let activeSlotIndex = null;
+    let allApps = []; // List of apps fetched from macOS system
+
+    // ── DOM Refs ──────────────────────────────────────────────────────
+    const launcherGrid = $('launcherGrid');
+    const btnEditMode = $('btnEditMode');
+    const selectionModal = $('selectionModal');
+    const appsGrid = $('appsGrid');
+    const appSearchInput = $('appSearchInput');
+    const btnModalCancel = $('btnModalCancel');
+    const btnModalClose = $('btnModalClose');
+    const toast = $('toast');
+    const launcherSub = $('launcherSub');
+
+    // ── Toast Helper ──────────────────────────────────────────────────
+    let toastTimer;
+    function showToast(msg, isError = false) {
+      clearTimeout(toastTimer);
+      toast.textContent = msg;
+      toast.classList.toggle('error', isError);
+      toast.classList.add('show');
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+    }
+
+    const haptic = (ms = 8) => navigator.vibrate?.(ms);
+
+    // ── Render Grid ───────────────────────────────────────────────────
+    function renderGrid() {
+      launcherGrid.innerHTML = '';
+
+      slots.forEach((appConfig, index) => {
+        const tile = document.createElement('div');
+        tile.className = 'launcher-tile';
+
+        if (appConfig === null) {
+          tile.classList.add('blank');
+          tile.innerHTML = `
+            <span class="tile-plus" aria-hidden="true">+</span>
+            <span class="tile-label">Add App</span>
+          `;
+          tile.setAttribute('aria-label', `Slot ${index + 1}: Empty. Tap to configure.`);
+          tile.addEventListener('click', () => openModal(index));
+        } else {
+          tile.classList.add('configured', appConfig.bgClass);
+          tile.innerHTML = `
+            <span class="tile-app-name" style="font-size: 13px; font-weight: 700; width: 100%; text-align: center; padding: 0 10px; line-height: 1.3; overflow-wrap: break-word;">${appConfig.name}</span>
+            <button class="tile-delete-badge" aria-label="Clear ${appConfig.name}">✕</button>
+          `;
+          tile.setAttribute('aria-label', `Slot ${index + 1}: ${appConfig.name}. Tap to launch.`);
+
+          // Delete badge click handler
+          const deleteBadge = tile.querySelector('.tile-delete-badge');
+          deleteBadge.addEventListener('click', (e) => {
+            e.stopPropagation();
+            haptic(15);
+            clearSlot(index);
+          });
+
+          // Core tile click action
+          tile.addEventListener('click', () => {
+            if (isEditing) {
+              openModal(index);
+            } else {
+              launchApp(appConfig.name);
+            }
+          });
+        }
+
+        launcherGrid.appendChild(tile);
+      });
+    }
+
+    function toggleEditMode() {
+      isEditing = !isEditing;
+      btnEditMode.classList.toggle('active', isEditing);
+      btnEditMode.textContent = isEditing ? 'Done' : 'Edit';
+      launcherGrid.classList.toggle('editing', isEditing);
+      launcherSub.textContent = isEditing
+        ? 'Tap ✕ to clear slots · Tap tiles to change'
+        : 'Tap to launch application';
+      haptic(10);
+    }
+
+    // ── API Integration ───────────────────────────────────────────────
+    async function fetchSystemApps() {
+      try {
+        const res = await fetch('/api/launcher/apps');
+        if (res.status === 401) {
+          window.location.href = '/login';
+          return;
+        }
+        const data = await res.json();
+        allApps = data.apps || [];
+        renderModalApps();
+      } catch (err) {
+        console.error(err);
+        appsGrid.innerHTML = `<span style="font-size: 12px; color: var(--danger); text-align: center; padding: 12px 0;">Could not load applications.</span>`;
+      }
+    }
+
+    async function launchApp(appName) {
+      haptic(12);
+      showToast(`Launching ${appName}…`);
+
+      try {
+        const res = await fetch('/api/launcher/launch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ app: appName })
+        });
+
+        if (res.status === 401) {
+          window.location.href = '/login';
+          return;
+        }
+
+        const data = await res.json();
+        if (res.ok) {
+          showToast(`${appName} Launched!`);
+        } else {
+          showToast(data.error || `Could not launch ${appName}`, true);
+        }
+      } catch (err) {
+        showToast('Connection error', true);
+      }
+    }
+
+    // ── Slot Configuration Actions ────────────────────────────────────
+    function configureSlot(index, appConfig) {
+      slots[index] = appConfig;
+      saveState();
+      renderGrid();
+      closeModal();
+      showToast(`Slot ${index + 1} set to ${appConfig.name}`);
+    }
+
+    function clearSlot(index) {
+      const oldAppName = slots[index]?.name;
+      slots[index] = null;
+      saveState();
+      renderGrid();
+      if (oldAppName) {
+        showToast(`Cleared ${oldAppName}`);
+      }
+    }
+
+    // ── Modal Handlers ────────────────────────────────────────────────
+    function openModal(index) {
+      haptic(6);
+      activeSlotIndex = index;
+      $('modalTitle').textContent = `Configure Slot ${index + 1}`;
+
+      selectionModal.classList.add('open');
+      appSearchInput.value = '';
+      appSearchInput.focus();
+
+      if (allApps.length === 0) {
+        fetchSystemApps();
+      } else {
+        renderModalApps();
+      }
+    }
+
+    function closeModal() {
+      selectionModal.classList.remove('open');
+      activeSlotIndex = null;
+      appSearchInput.value = '';
+    }
+
+    // ── Render Scrollable Apps List inside Modal ──────────────────────
+    function renderModalApps(filterText = '') {
+      appsGrid.innerHTML = '';
+      const filterLower = filterText.toLowerCase();
+
+      const filtered = allApps.filter(app => app.toLowerCase().includes(filterLower));
+
+      if (filtered.length === 0) {
+        appsGrid.innerHTML = `<span style="font-size: 12px; color: var(--text-muted); text-align: center; padding: 16px 0;">No matching apps found.</span>`;
+        return;
+      }
+
+      filtered.forEach(appName => {
+        const metadata = resolveCustomMetadata(appName);
+        const btn = document.createElement('button');
+        btn.className = 'btn-preset';
+        btn.innerHTML = `
+          <span>${metadata.name}</span>
+        `;
+        btn.addEventListener('click', () => {
+          haptic(8);
+          configureSlot(activeSlotIndex, metadata);
+        });
+        appsGrid.appendChild(btn);
+      });
+    }
+
+    // ── Event Listeners ───────────────────────────────────────────────
+    btnEditMode.addEventListener('click', toggleEditMode);
+    btnModalCancel.addEventListener('click', closeModal);
+    btnModalClose.addEventListener('click', closeModal);
+
+    // Live Search Event
+    appSearchInput.addEventListener('input', (e) => {
+      renderModalApps(e.target.value.trim());
+    });
+
+    // Close modal on escape
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && selectionModal.classList.contains('open')) {
+        closeModal();
+      }
+    });
+
+    // ── Init ──────────────────────────────────────────────────────────
+    loadState();
+    renderGrid();
+
+    // Pre-fetch system applications immediately in background
+    fetchSystemApps();
+
+  </script>
+</body>
+
+</html>

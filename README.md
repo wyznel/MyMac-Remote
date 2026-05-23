@@ -12,6 +12,11 @@ A Node.js web application that turns any phone or browser on the same local netw
 - Step buttons (+5 / -5)
 - Real-time sync via Server-Sent Events — volume changes made on the Mac appear on the phone within one second
 
+**Brightness**
+- Slider with live feedback
+- Step buttons (+5 / -5)
+- Real-time sync via Server-Sent Events — screen brightness changes made on the Mac appear on the phone within one second
+
 **Trackpad and mouse**
 - Drag to move the cursor
 - Tap to left-click
@@ -189,11 +194,20 @@ All endpoints except `/login`, `POST /auth/login`, and `POST /auth/logout` requi
 | `POST` | `/api/volume/down` | `{ step?: number }` (default 5, max 20) | `{ volume, muted }` |
 | `POST` | `/api/mute` | `{ muted: boolean }` | `{ volume, muted }` |
 
+### Brightness
+
+| Method | Path | Body | Response |
+|---|---|---|---|
+| `GET` | `/api/brightness` | — | `{ brightness: number }` |
+| `POST` | `/api/brightness` | `{ brightness: number }` (0–100) | `{ brightness }` |
+| `POST` | `/api/brightness/up` | `{ step?: number }` (default 5, max 20) | `{ brightness }` |
+| `POST` | `/api/brightness/down` | `{ step?: number }` (default 5, max 20) | `{ brightness }` |
+
 ### Real-time events
 
 | Method | Path | Description |
 |---|---|---|
-| `GET` | `/api/events` | Server-Sent Events stream. Sends `{ volume, muted }` immediately on connect, then pushes updates whenever the system volume changes (polled every one second server-side). |
+| `GET` | `/api/events` | Server-Sent Events stream. Sends `{ volume, muted, brightness }` immediately on connect, then pushes updates whenever the system volume or brightness changes (polled every one second server-side). |
 
 ### Mouse
 
