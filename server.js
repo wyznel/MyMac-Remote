@@ -1004,7 +1004,39 @@ async function generateCertIfNeeded() {
   return { key: fs.readFileSync(keyPath), cert: fs.readFileSync(certPath) };
 }
 
+/**
+ * Automatically compiles src/brightness.c into bin/brightness if it is missing.
+ */
+async function compileBrightnessIfNeeded() {
+  const binDir = path.join(__dirname, 'bin');
+  const binPath = path.join(binDir, 'brightness');
+  const srcPath = path.join(__dirname, 'src', 'brightness.c');
+  
+  if (fs.existsSync(binPath)) return;
+  
+  console.log('  bin/brightness binary missing. Attempting compilation...');
+  if (!fs.existsSync(srcPath)) {
+    throw new Error('src/brightness.c missing; cannot compile brightness control');
+  }
+  
+  fs.mkdirSync(binDir, { recursive: true });
+  
+  await new Promise((resolve, reject) => {
+    const cmd = `clang -O3 -F/System/Library/PrivateFrameworks -framework DisplayServices -framework IOKit -framework ApplicationServices "${srcPath}" -o "${binPath}"`;
+    exec(cmd, (err, stdout, stderr) => {
+      if (err) reject(new Error(stderr || err.message));
+      else resolve();
+    });
+  });
+  console.log('  ✓ bin/brightness compiled successfully');
+}
+
 (async () => {
+  try {
+    await compileBrightnessIfNeeded();
+  } catch (err) {
+    console.warn('  ⚠️ Brightness compiler failed:', err.message);
+  }
   await runAppleScript(`set the clipboard to "${_autoPin}"`);
   const tlsOptions = await generateCertIfNeeded();
 
